@@ -1,0 +1,146 @@
+.main-content {
+  transition: all 0.3s;
+  margin-left: 0;
+}
+
+@media (min-width: 1024px) {
+  .main-content {
+    margin-left: 16rem;
+  }
+}
+
+@layer base {
+  :root {
+    --base-clr: var(--background);
+    --line-clr: var(--border);
+    --hover-clr: var(--accent);
+    --text-clr: var(--foreground);
+    --accent-clr: var(--primary);
+    --secondary-text-clr: var(--muted-foreground);
+  }
+}
+
+#sidebar {
+  box-sizing: border-box;
+  height: 100vh;
+  width: 250px;
+  padding: 1rem;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  position: sticky;
+  top: 0;
+  align-self: start;
+  transition: all 0.3s;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+#sidebar.close {
+  padding: 0.25rem;
+  width: 60px;
+}
+
+#sidebar ul {
+  list-style: none;
+}
+
+#sidebar > ul > li:first-child {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+#sidebar > ul > li:first-child .logo {
+  font-weight: 600;
+}
+
+#sidebar ul li.active a {
+  color: var(--sidebar-primary);
+}
+
+#sidebar ul li.active a svg {
+  fill: var(--sidebar-primary);
+}
+
+#sidebar a,
+#sidebar .dropdown-btn,
+#sidebar .logo {
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  text-decoration: none;
+  color: var(--sidebar-foreground);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+#sidebar svg {
+  flex-shrink: 0;
+  fill: var(--sidebar-foreground);
+}
+
+#sidebar a span,
+#sidebar .dropdown-btn span {
+  flex-grow: 1;
+}
+
+#sidebar a:hover,
+#sidebar .dropdown-btn:hover {
+  background-color: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+}
+
+#toggle-btn {
+  margin-left: auto;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: transparent;
+  cursor: pointer;
+  color: var(--sidebar-foreground);
+}
+
+#toggle-btn:hover {
+  background-color: var(--sidebar-accent);
+}
+
+@media (max-width: 800px) {
+  #sidebar {
+    height: 60px;
+    width: 100%;
+    border-right: 0;
+    border-top: 1px solid var(--sidebar-border);
+    padding: 0;
+    position: fixed;
+    bottom: 0;
+    top: auto;
+  }
+
+  #sidebar > ul {
+    padding: 0;
+    display: grid;
+    grid-auto-columns: 60px;
+    grid-auto-flow: column;
+    align-items: center;
+    overflow-x: auto;
+  }
+
+  #sidebar ul li {
+    height: 100%;
+  }
+
+  #sidebar ul a,
+  #sidebar ul .dropdown-btn {
+    width: 60px;
+    height: 60px;
+    padding: 0;
+    border-radius: 0;
+    justify-content: center;
+  }
+
+  #sidebar ul li span,
+  #sidebar ul li:first-child,
+  .dropdown-btn svg:last-child {
+    display: none;
+  }
+}
