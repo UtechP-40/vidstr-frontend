@@ -33,7 +33,7 @@ const HomeVideoCard = ({video}) => {
       }
     };
   }, []);
-// console.log(videos[0])
+// console.log(video)
   const handleMouseEnter = () => {
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);

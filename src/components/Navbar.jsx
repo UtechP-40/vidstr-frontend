@@ -123,7 +123,15 @@ function Navbar() {
               title="Profile"
               onClick={toggleProfileMenu}
             >
-              <FaUserCircle className="text-foreground text-2xl" />
+              <img 
+                src={user.avatar} 
+                alt="User avatar" 
+                className="w-8 h-8 rounded-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png";
+                }}
+              />
               <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-background border border-border px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                 Profile
               </span>

@@ -5,7 +5,7 @@ import { fetchAllVideos } from "../redux/features/video.slice";
 import HomeVideoCard from '../components/HomeVideoCard';
 
 function HomePage() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch(); 
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);

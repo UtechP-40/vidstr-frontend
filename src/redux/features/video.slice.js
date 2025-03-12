@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { axiosInstance } from '../../lib/axios.js';
-
+import { toast } from "sonner";
 // Define the initial state
 const initialState = {
   videos: [],
@@ -9,7 +9,12 @@ const initialState = {
   totalVideos: 0,
   currentVideo: null,
   loadingCurrentVideo: false,
-  networkError: false
+  networkError: false,
+  publishLoading: false,
+  updateLoading: false,
+  deleteLoading: false,
+  likeLoading: false,
+  dislikeLoading: false
 };
 
 export const fetchAllVideos = createAsyncThunk(
@@ -18,20 +23,11 @@ export const fetchAllVideos = createAsyncThunk(
     try {
       const response = await axiosInstance.get('/videos/', {
         params: { page, limit, query, sortBy, sortType, userId },
-        timeout: 10000 // 10 second timeout
+        timeout: 10000
       });
-
-      console.log("Fetched videos:", response.data);
       return response.data;
     } catch (error) {
-      console.error("Error fetching videos:", error);
-      if (error.code === 'ERR_NETWORK') {
-        throw new Error('Network connection error. Please check your internet connection.');
-      }
-      if (error.response) {
-        throw error.response.data;
-      }
-      throw error;
+      handleError(error);
     }
   }
 );
@@ -41,23 +37,90 @@ export const fetchCurrentVideo = createAsyncThunk(
   async (videoId) => {
     try {
       const response = await axiosInstance.get(`/videos/${videoId}`, {
-        timeout: 10000 // 10 second timeout
+        timeout: 10000
       });
-
-      console.log("Fetched current video:", response.data);
       return response.data;
     } catch (error) {
-      console.error("Error fetching current video:", error);
-      if (error.code === 'ERR_NETWORK') {
-        throw new Error('Network connection error. Please check your internet connection.');
-      }
-      if (error.response) {
-        throw error.response.data;
-      }
-      throw error;
+      handleError(error);
     }
   }
 );
+
+export const publishVideo = createAsyncThunk(
+  'video/publishVideo',
+  async (formData) => {
+    try {
+      const response = await axiosInstance.post('/videos/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return response.data;
+    } catch (error) {
+      handleError(error);
+    }
+  }
+);
+
+export const updateVideo = createAsyncThunk(
+  'video/updateVideo',
+  async ({ videoId, formData }) => {
+    try {
+      const response = await axiosInstance.patch(`/videos/${videoId}`, formData);
+      return response.data;
+    } catch (error) {
+      handleError(error);
+    }
+  }
+);
+
+export const deleteVideo = createAsyncThunk(
+  'video/deleteVideo',
+  async (videoId) => {
+    try {
+      const response = await axiosInstance.delete(`/videos/${videoId}`);
+      return response.data;
+    } catch (error) {
+      handleError(error);
+    }
+  }
+);
+
+export const toggleVideoLike = createAsyncThunk(
+  'video/toggleLike',
+  async (videoId) => {
+    try {
+      const response = await axiosInstance.post(`/videos/${videoId}/like`);
+      return response.data;
+    } catch (error) {
+      handleError(error);
+    }
+  }
+);
+
+export const toggleVideoDislike = createAsyncThunk(
+  'video/toggleDislike',
+  async (videoId) => {
+    try {
+      const response = await axiosInstance.post(`/videos/${videoId}/dislike`);
+      return response.data;
+    } catch (error) {
+      handleError(error);
+    }
+  }
+);
+
+const handleError = (error) => {
+  if (error.code === 'ERR_NETWORK') {
+    toast.error('Network connection error. Please check your internet connection.');
+    throw new Error('Network connection error. Please check your internet connection.');
+  }
+  if (error.response) {
+    if (error.response.status === 500) {
+      toast.error('Server error occurred. Please try again later.');
+    }
+    throw error.response.data;
+  }
+  throw error;
+};
 
 const videoSlice = createSlice({
   name: 'video',
@@ -70,6 +133,7 @@ const videoSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Fetch All Videos
       .addCase(fetchAllVideos.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -86,6 +150,7 @@ const videoSlice = createSlice({
         state.error = action.error.message;
         state.networkError = action.error.message.includes('Network connection error');
       })
+      // Fetch Current Video
       .addCase(fetchCurrentVideo.pending, (state) => {
         state.loadingCurrentVideo = true;
         state.error = null;
@@ -100,9 +165,105 @@ const videoSlice = createSlice({
         state.loadingCurrentVideo = false;
         state.error = action.error.message;
         state.networkError = action.error.message.includes('Network connection error');
+      })
+      // Publish Video
+      .addCase(publishVideo.pending, (state) => {
+        state.publishLoading = true;
+        state.error = null;
+      })
+      .addCase(publishVideo.fulfilled, (state, action) => {
+        state.publishLoading = false;
+        state.videos.unshift(action.payload.data);
+        toast.success('Video published successfully!');
+      })
+      .addCase(publishVideo.rejected, (state, action) => {
+        state.publishLoading = false;
+        state.error = action.error.message;
+      })
+      // Update Video
+      .addCase(updateVideo.pending, (state) => {
+        state.updateLoading = true;
+        state.error = null;
+      })
+      .addCase(updateVideo.fulfilled, (state, action) => {
+        state.updateLoading = false;
+        const updatedVideo = action.payload.data;
+        const index = state.videos.findIndex(video => video._id === updatedVideo._id);
+        if (index !== -1) {
+          state.videos[index] = updatedVideo;
+        }
+        if (state.currentVideo?._id === updatedVideo._id) {
+          state.currentVideo = updatedVideo;
+        }
+        toast.success('Video updated successfully!');
+      })
+      .addCase(updateVideo.rejected, (state, action) => {
+        state.updateLoading = false;
+        state.error = action.error.message;
+      })
+      // Delete Video
+      .addCase(deleteVideo.pending, (state) => {
+        state.deleteLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteVideo.fulfilled, (state, action) => {
+        state.deleteLoading = false;
+        state.videos = state.videos.filter(video => video._id !== action.meta.arg);
+        if (state.currentVideo?._id === action.meta.arg) {
+          state.currentVideo = null;
+        }
+        toast.success('Video deleted successfully!');
+      })
+      .addCase(deleteVideo.rejected, (state, action) => {
+        state.deleteLoading = false;
+        state.error = action.error.message;
+      })
+      // Toggle Like
+      .addCase(toggleVideoLike.pending, (state) => {
+        state.likeLoading = true;
+        state.error = null;
+      })
+      .addCase(toggleVideoLike.fulfilled, (state, action) => {
+        state.likeLoading = false;
+        const updatedVideo = action.payload.data;
+        const index = state.videos.findIndex(video => video._id === updatedVideo._id);
+        if (index !== -1) {
+          state.videos[index] = updatedVideo;
+        }
+        if (state.currentVideo?._id === updatedVideo._id) {
+          state.currentVideo = updatedVideo;
+        }
+      })
+      .addCase(toggleVideoLike.rejected, (state, action) => {
+        state.likeLoading = false;
+        state.error = action.error.message;
+      })
+      // Toggle Dislike
+      .addCase(toggleVideoDislike.pending, (state) => {
+        state.dislikeLoading = true;
+        state.error = null;
+      })
+      .addCase(toggleVideoDislike.fulfilled, (state, action) => {
+        state.dislikeLoading = false;
+        const updatedVideo = action.payload.data;
+        const index = state.videos.findIndex(video => video._id === updatedVideo._id);
+        if (index !== -1) {
+          state.videos[index] = updatedVideo;
+        }
+        if (state.currentVideo?._id === updatedVideo._id) {
+          state.currentVideo = updatedVideo;
+        }
+      })
+      .addCase(toggleVideoDislike.rejected, (state, action) => {
+        state.dislikeLoading = false;
+        state.error = action.error.message;
       });
   },
-});
+}); 
+
+// Update these export names to match the imports
+export const likeVideo = toggleVideoLike;
+export const dislikeVideo = toggleVideoDislike;
 
 export const { clearNetworkError } = videoSlice.actions;
 export const { reducer: videoReducer } = videoSlice;

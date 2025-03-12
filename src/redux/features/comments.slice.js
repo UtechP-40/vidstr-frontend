@@ -1,13 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { axiosInstance } from '../../lib/axios';
 
-// Async thunk for fetching video comments
+// Async thunks for comments CRUD
 export const fetchVideoComments = createAsyncThunk(
     'comments/fetchVideoComments',
     async (videoId, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`/comments/${videoId}`);
-            console.log(response.data)
+            // Ensure videoId is a string
+            const cleanVideoId = String(videoId).trim();
+            const response = await axiosInstance.get(`/comments/${cleanVideoId}`);
             return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch comments');
@@ -15,12 +16,11 @@ export const fetchVideoComments = createAsyncThunk(
     }
 );
 
-// Async thunk for adding a comment
 export const addComment = createAsyncThunk(
     'comments/addComment',
-    async ({videoId, comment}, { rejectWithValue }) => {
+    async ({videoId, content}, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post(`/comments/${videoId}`, { comment });
+            const response = await axiosInstance.post(`/comments/${videoId}`, { content });
             return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to add comment');
@@ -28,12 +28,11 @@ export const addComment = createAsyncThunk(
     }
 );
 
-// Async thunk for updating a comment
 export const updateComment = createAsyncThunk(
     'comments/updateComment',
-    async ({commentId, comment}, { rejectWithValue }) => {
+    async ({commentId, content}, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.patch(`/comments/c/${commentId}`, { comment });
+            const response = await axiosInstance.patch(`/comments/${commentId}`, { content });
             return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to update comment');
@@ -41,15 +40,46 @@ export const updateComment = createAsyncThunk(
     }
 );
 
-// Async thunk for deleting a comment
 export const deleteComment = createAsyncThunk(
     'comments/deleteComment',
     async (commentId, { rejectWithValue }) => {
         try {
-            await axiosInstance.delete(`/comments/c/${commentId}`);
+            await axiosInstance.delete(`/comments/${commentId}`);
             return commentId;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to delete comment');
+        }
+    }
+);
+
+// Async thunks for comment interactions
+export const toggleCommentLike = createAsyncThunk(
+    'comments/toggleLike',
+    async (commentId, { rejectWithValue }) => {
+        if (!commentId) {
+            return rejectWithValue('Comment ID is required');
+        }
+        try {
+            const response = await axiosInstance.post(`/comments/${commentId}/like`);
+            return response.data.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to toggle like');
+        }
+    }
+);
+
+// Change this thunk
+export const toggleCommentDislike = createAsyncThunk(
+    'comments/toggleDislike',
+    async (commentId, { rejectWithValue }) => {  // Only accept commentId parameter
+        if (!commentId) {
+            return rejectWithValue('Comment ID is required');
+        }
+        try {
+            const response = await axiosInstance.post(`/comments/${commentId}/dislike`);
+            return response.data.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to toggle dislike');
         }
     }
 );
@@ -64,7 +94,7 @@ const commentsSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
-            // Fetch comments
+            // Fetch comments cases
             .addCase(fetchVideoComments.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -79,21 +109,12 @@ const commentsSlice = createSlice({
                 state.error = action.payload;
                 state.comments = [];
             })
-            // Add comment
-            .addCase(addComment.pending, (state) => {
-                state.error = null;
-            })
+            // Add comment cases
             .addCase(addComment.fulfilled, (state, action) => {
-                state.comments.push(action.payload);
+                state.comments.unshift(action.payload);
                 state.error = null;
             })
-            .addCase(addComment.rejected, (state, action) => {
-                state.error = action.payload;
-            })
-            // Update comment
-            .addCase(updateComment.pending, (state) => {
-                state.error = null;
-            })
+            // Update comment cases
             .addCase(updateComment.fulfilled, (state, action) => {
                 const index = state.comments.findIndex(
                     comment => comment._id === action.payload._id
@@ -101,24 +122,49 @@ const commentsSlice = createSlice({
                 if (index !== -1) {
                     state.comments[index] = action.payload;
                 }
-                state.error = null;
             })
-            .addCase(updateComment.rejected, (state, action) => {
-                state.error = action.payload;
-            })
-            // Delete comment
-            .addCase(deleteComment.pending, (state) => {
-                state.error = null;
-            })
+            // Delete comment cases
             .addCase(deleteComment.fulfilled, (state, action) => {
                 state.comments = state.comments.filter(
                     comment => comment._id !== action.payload
                 );
-                state.error = null;
             })
-            .addCase(deleteComment.rejected, (state, action) => {
-                state.error = action.payload;
-            });
+            // Toggle like/dislike cases
+            .addCase(toggleCommentLike.fulfilled, (state, action) => {
+                const index = state.comments.findIndex(
+                    comment => comment._id === action.payload.commentId
+                );
+                if (index !== -1) {
+                    state.comments[index] = {
+                        ...state.comments[index],
+                        isLiked: action.payload.isLiked,
+                        isDisliked: action.payload.isDisliked,
+                        likesCount: action.payload.likesCount,
+                        dislikesCount: action.payload.dislikesCount
+                    };
+                }
+            })
+            .addCase(toggleCommentDislike.fulfilled, (state, action) => {
+                const index = state.comments.findIndex(
+                    comment => comment._id === action.payload.commentId
+                );
+                if (index !== -1) {
+                    state.comments[index] = {
+                        ...state.comments[index],
+                        isLiked: action.payload.isLiked,
+                        isDisliked: action.payload.isDisliked,
+                        likesCount: action.payload.likesCount,
+                        dislikesCount: action.payload.dislikesCount
+                    };
+                }
+            })
+            // Handle all rejected cases
+            .addMatcher(
+                action => action.type.endsWith('/rejected'),
+                (state, action) => {
+                    state.error = action.payload;
+                }
+            );
     }
 });
 

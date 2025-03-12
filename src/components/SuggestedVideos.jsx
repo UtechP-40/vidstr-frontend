@@ -1,40 +1,42 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { fetchRecommendations } from '../redux/features/recommendation.slice';
+import VideoCard from './VideoCard';
 
-const SuggestedVideos = () => {
-  const { videos } = useSelector((state) => state.video); // Fetch suggested videos from Redux
+const SuggestedVideos = ({ videoId, currentCategory, currentTags }) => {
+  const dispatch = useDispatch();
+  const { recommendations, loading, error } = useSelector(
+    (state) => state.recommendations
+  ); 
 
-  if (!videos || videos.length === 0) {
-    return <p className="text-gray-500 text-center">No suggestions available.</p>;
-  }
+  useEffect(() => {
+    dispatch(fetchRecommendations({
+      limit: 10,
+      currentVideoId: videoId,
+      category: currentCategory,
+      tags: currentTags
+    }));
+  }, [dispatch, videoId, currentCategory, currentTags]);
+
+  if (loading) return <div className="text-center p-4">Loading suggestions...</div>;
+  if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
 
   return (
-    <div className="w-full lg:w-96 p-2">
-      <h2 className="text-lg font-bold mb-3">Suggested Videos</h2>
-      <div className="flex flex-col gap-3">
-        {videos.map((video) => (
-          <Link
-            to={`/watch/${video._id}`}
-            key={video._id}
-            className="flex gap-3 hover:bg-gray-100 p-2 rounded-md transition"
-          >
-            {/* Video Thumbnail */}
-            <img
-              src={video.thumbnail || "https://via.placeholder.com/160"}
-              alt={video.title}
-              className="w-36 h-20 rounded-md object-cover"
-            />
-
-            {/* Video Details */}
-            <div className="flex flex-col flex-1">
-              <h3 className="text-sm font-semibold leading-tight">{video.title}</h3>
-              <p className="text-xs text-gray-600">{video.owner?.username || "Unknown Creator"}</p>
-              <p className="text-xs text-gray-500">{video.views} views • {new Date(video.createdAt).toLocaleDateString()}</p>
-            </div>
-          </Link>
-        ))}
-      </div>
+    <div className="flex flex-col gap-4">
+      <h3 className="text-lg font-semibold">Recommended Videos</h3>
+      {recommendations.map((video) => (
+        <Link 
+          key={video._id} 
+          to={`/watch/${video._id}`}
+          className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
+        >
+          <VideoCard
+            video={video}
+            isCompact={true}
+          />
+        </Link>
+      ))}
     </div>
   );
 };

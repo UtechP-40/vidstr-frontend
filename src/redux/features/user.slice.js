@@ -18,7 +18,6 @@ export const checkAuth = createAsyncThunk("user/checkAuth", async (_, { dispatch
         const response = await axiosInstance.get("/users/current-user");
         return response.data;
     } catch (error) {
-        console.log(error);
         if (error.response?.status === 401) {
             const refreshResponse = await dispatch(refreshAccessToken());
             if (refreshResponse.payload) {
@@ -26,7 +25,6 @@ export const checkAuth = createAsyncThunk("user/checkAuth", async (_, { dispatch
                 return reply.data;
             }
         }
-        toast.error("Authentication check failed");
         return rejectWithValue(error.response?.data || "Auth check failed");
     }
 });
@@ -44,13 +42,9 @@ export const signIn = createAsyncThunk("user/signIn", async (credentials, { reje
 
 export const googleSignIn = createAsyncThunk("user/googleSignIn", async (tokenId, { rejectWithValue }) => {
     try {
-        // const response = await axiosInstance.get("/auth/google", { tokenId });
-        window.location.href = "http://localhost:8000/api/v1/auth/google"
-        // toast.success("Google login successful!"); 
-        // return response.data;
+        window.location.href = "http://localhost:8000/api/v1/auth/google";
     } catch (error) {
-        console.log(error)
-        toast.error(error.response?.data?.message || "Google login failed");
+        toast.error("Google login failed");
         return rejectWithValue(error.response?.data || "Google login failed");
     }
 });
@@ -58,13 +52,60 @@ export const googleSignIn = createAsyncThunk("user/googleSignIn", async (tokenId
 export const refreshAccessToken = createAsyncThunk("user/refreshAccessToken", async (_, { rejectWithValue }) => {
     try {
         const response = await axiosInstance.patch("/users/refresh-token");
-        toast.success("Token refreshed successfully!");
         return response.data;
     } catch (error) {
-        toast.error("Token refresh failed");
         return rejectWithValue(error.response?.data || "Token refresh failed");
     }
 });
+
+export const updateAccountDetails = createAsyncThunk("user/updateAccount", async (userData, { rejectWithValue }) => {
+    try {
+        const response = await axiosInstance.patch("/users/update-account", userData);
+        toast.success("Account updated successfully!");
+        return response.data;
+    } catch (error) {
+        toast.error(error.response?.data?.message || "Update failed");
+        return rejectWithValue(error.response?.data || "Update failed");
+    }
+});
+
+export const changePassword = createAsyncThunk("user/changePassword", async (passwordData, { rejectWithValue }) => {
+    try {
+        const response = await axiosInstance.post("/users/change-password", passwordData);
+        toast.success("Password changed successfully!");
+        return response.data;
+    } catch (error) {
+        toast.error(error.response?.data?.message || "Password change failed");
+        return rejectWithValue(error.response?.data || "Password change failed");
+    }
+});
+
+export const updateAvatar = createAsyncThunk("user/updateAvatar", async (avatarFile, { rejectWithValue }) => {
+    try {
+        const formData = new FormData();
+        formData.append("avatar", avatarFile);
+        const response = await axiosInstance.patch("/users/avatar", formData);
+        toast.success("Avatar updated successfully!");
+        return response.data;
+    } catch (error) {
+        toast.error("Avatar update failed");
+        return rejectWithValue(error.response?.data || "Avatar update failed");
+    }
+});
+
+export const updateCoverImage = createAsyncThunk("user/updateCoverImage", async (coverFile, { rejectWithValue }) => {
+    try {
+        const formData = new FormData();
+        formData.append("coverImage", coverFile);
+        const response = await axiosInstance.patch("/users/cover-image", formData);
+        toast.success("Cover image updated successfully!");
+        return response.data;
+    } catch (error) {
+        toast.error("Cover image update failed");
+        return rejectWithValue(error.response?.data || "Cover image update failed");
+    }
+});
+
 const userSlice = createSlice({
     name: "user",
     initialState: {
@@ -74,6 +115,10 @@ const userSlice = createSlice({
         isRegistring: false,
         isRefreshingToken: false,
         isGoogleSigningIn: false,
+        isUpdatingAccount: false,
+        isChangingPassword: false,
+        isUpdatingAvatar: false,
+        isUpdatingCover: false,
         error: null,
     },
     reducers: {},
@@ -136,6 +181,53 @@ const userSlice = createSlice({
             })
             .addCase(refreshAccessToken.rejected, (state) => {
                 state.isRefreshingToken = false;
+            });
+
+        builder
+            .addCase(updateAccountDetails.pending, (state) => {
+                state.isUpdatingAccount = true;
+            })
+            .addCase(updateAccountDetails.fulfilled, (state, action) => {
+                state.user = action.payload.data;
+                state.isUpdatingAccount = false;
+            })
+            .addCase(updateAccountDetails.rejected, (state) => {
+                state.isUpdatingAccount = false;
+            });
+
+        builder
+            .addCase(changePassword.pending, (state) => {
+                state.isChangingPassword = true;
+            })
+            .addCase(changePassword.fulfilled, (state) => {
+                state.isChangingPassword = false;
+            })
+            .addCase(changePassword.rejected, (state) => {
+                state.isChangingPassword = false;
+            });
+
+        builder
+            .addCase(updateAvatar.pending, (state) => {
+                state.isUpdatingAvatar = true;
+            })
+            .addCase(updateAvatar.fulfilled, (state, action) => {
+                state.user = action.payload.data;
+                state.isUpdatingAvatar = false;
+            })
+            .addCase(updateAvatar.rejected, (state) => {
+                state.isUpdatingAvatar = false;
+            });
+
+        builder
+            .addCase(updateCoverImage.pending, (state) => {
+                state.isUpdatingCover = true;
+            })
+            .addCase(updateCoverImage.fulfilled, (state, action) => {
+                state.user = action.payload.data;
+                state.isUpdatingCover = false;
+            })
+            .addCase(updateCoverImage.rejected, (state) => {
+                state.isUpdatingCover = false;
             });
     },
 });
