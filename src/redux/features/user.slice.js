@@ -42,7 +42,7 @@ export const signIn = createAsyncThunk("user/signIn", async (credentials, { reje
 
 export const googleSignIn = createAsyncThunk("user/googleSignIn", async (tokenId, { rejectWithValue }) => {
     try {
-        window.location.href = "http://localhost:8000/api/v1/auth/google";
+        window.location.href = `${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/google`;
     } catch (error) {
         toast.error("Google login failed");
         return rejectWithValue(error.response?.data || "Google login failed");

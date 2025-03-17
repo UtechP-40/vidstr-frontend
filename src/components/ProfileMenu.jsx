@@ -21,6 +21,7 @@ const { theme, setTheme } = useTheme();
 //     setIsOpen(!isOpen);
 //   };
 const {user} = useSelector(state=>state.user)
+console.log(user)
   return (
     <div className="relative">
       {/* <button  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-200">
@@ -28,27 +29,27 @@ const {user} = useSelector(state=>state.user)
         <span className="font-medium">Vaibhav Securities</span>
       </button> */}
 
-        <div className="absolute right-0 mt-2 w-64  shadow-md rounded-lg p-4">
+        <div className="absolute right-0 mt-2 w-64 bg-background shadow-md rounded-lg p-4 border border-border">
           <div className="flex flex-col items-center mb-4">
             <img src={user.avatar} alt="Avatar" className="w-16 h-16 rounded-full" />
-            <p className="font-semibold">{user.fullName}</p>
-            <p className="text-gray-500 text-sm">@{user.username}</p>
+            <p className="font-semibold text-foreground">{user.fullName}</p>
+            <p className="text-muted-foreground text-sm">@{user.username}</p>
           </div>
 
           <div className="space-y-2">
-            <button className="w-full flex items-center p-2 rounded-md hover:bg-gray-500">
+            <button className="w-full flex items-center p-2 rounded-md hover:bg-accent text-foreground">
               <FaExchangeAlt className="mr-2" />
               Switch Account
             </button>
-            <button className="w-full flex items-center p-2 rounded-md hover:bg-gray-500">
+            <button className="w-full flex items-center p-2 rounded-md hover:bg-accent text-foreground">
               <FaSignOutAlt className="mr-2" />
               Sign Out
             </button>
-            <hr />
+            <hr className="border-border" />
 
-            <button className="w-full flex items-center p-2 rounded-md hover:bg-gray-500" onClick={handleThemeChange}>
+            <button className="w-full flex items-center p-2 rounded-md hover:bg-accent text-foreground" onClick={handleThemeChange}>
               <FaPalette className="mr-2" />
-              Appearance: Light
+              Appearance: {isDark ? 'Dark' : 'Light'}
             </button>
             <button className="w-full flex items-center p-2 rounded-md hover:bg-gray-500">
               <FaLanguage className="mr-2" />

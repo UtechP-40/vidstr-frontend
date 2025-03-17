@@ -1,30 +1,39 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { formatDistanceToNow } from 'date-fns';
+import { 
+  getUserNotifications, 
+  markNotificationAsRead, 
+  markAllNotificationsAsRead 
+} from '../redux/features/notification.slice';
 
 const Notifications = () => {
-  // Mock notifications array
-  const notifications = [
-    {
-      id: 1,
-      type: "COMMENT",
-      content: "John commented on your video",
-      createdAt: new Date(),
-      isRead: false
-    },
-    {
-      id: 2,
-      type: "LIKE",
-      content: "Sarah liked your video",
-      createdAt: new Date(Date.now() - 3600000), // 1 hour ago
-      isRead: true
-    },
-    {
-      id: 3,
-      type: "SUBSCRIPTION",
-      content: "Alex subscribed to your channel",
-      createdAt: new Date(Date.now() - 7200000), // 2 hours ago
-      isRead: false
+  const dispatch = useDispatch();
+  const { notifications, loading, error } = useSelector(state => state.notifications);
+
+  useEffect(() => {
+    dispatch(getUserNotifications());
+  }, [dispatch]);
+
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      await dispatch(markNotificationAsRead(notificationId)).unwrap();
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
     }
-  ];
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await dispatch(markAllNotificationsAsRead()).unwrap();
+      // Optional: Refresh notifications after marking all as read
+      dispatch(getUserNotifications());
+    } catch (error) {
+      console.error('Failed to mark all as read:', error);
+      // Optional: Show error to user
+      alert('Failed to mark all notifications as read');
+    }
+  };
 
   const getNotificationIcon = (type) => {
     switch (type) {
@@ -41,6 +50,22 @@ const Notifications = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="bg-background border border-border rounded-lg shadow-lg w-80 p-4 text-center">
+        Loading notifications...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-background border border-border rounded-lg shadow-lg w-80 p-4 text-center text-red-500">
+        {error}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-background border border-border rounded-lg shadow-lg w-80">
       <div className="p-4 border-b border-border sticky top-0 bg-background z-10">
@@ -51,9 +76,10 @@ const Notifications = () => {
         {notifications.length > 0 ? (
           notifications.map((notification) => (
             <div 
-              key={notification.id}
+              key={notification._id}
               className={`p-4 border-b border-border hover:bg-accent/50 transition-colors cursor-pointer
                 ${notification.isRead ? 'opacity-60' : ''}`}
+              onClick={() => handleMarkAsRead(notification._id)}
             >
               <div className="flex items-start gap-3">
                 <span className="text-xl flex-shrink-0">
@@ -64,7 +90,7 @@ const Notifications = () => {
                     {notification.content}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(notification.createdAt).toLocaleTimeString()}
+                    {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                   </p>
                 </div>
                 {!notification.isRead && (
@@ -82,7 +108,10 @@ const Notifications = () => {
       
       {notifications.length > 0 && (
         <div className="p-3 text-center border-t border-border sticky bottom-0 bg-background">
-          <button className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+          <button 
+            onClick={handleMarkAllAsRead}
+            className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+          >
             Mark all as read
           </button>
         </div>

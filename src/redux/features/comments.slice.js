@@ -6,7 +6,6 @@ export const fetchVideoComments = createAsyncThunk(
     'comments/fetchVideoComments',
     async (videoId, { rejectWithValue }) => {
         try {
-            // Ensure videoId is a string
             const cleanVideoId = String(videoId).trim();
             const response = await axiosInstance.get(`/comments/${cleanVideoId}`);
             return response.data.data;
@@ -42,7 +41,7 @@ export const updateComment = createAsyncThunk(
 
 export const deleteComment = createAsyncThunk(
     'comments/deleteComment',
-    async (commentId, { rejectWithValue }) => {
+    async ({commentId,videoId}, { rejectWithValue }) => {
         try {
             await axiosInstance.delete(`/comments/${commentId}`);
             return commentId;
@@ -101,17 +100,20 @@ const commentsSlice = createSlice({
             })
             .addCase(fetchVideoComments.fulfilled, (state, action) => {
                 state.loading = false;
-                state.comments = action.payload;
+                // Ensure unique comments by using Set
+                const uniqueComments = Array.from(
+                    new Map(action.payload.map(comment => [comment._id, comment])).values()
+                );
+                state.comments = uniqueComments;
                 state.error = null;
-            })
-            .addCase(fetchVideoComments.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-                state.comments = [];
             })
             // Add comment cases
             .addCase(addComment.fulfilled, (state, action) => {
-                state.comments.unshift(action.payload);
+                // Check if comment already exists
+                const exists = state.comments.some(comment => comment._id === action.payload._id);
+                if (!exists) {
+                    state.comments.unshift(action.payload);
+                }
                 state.error = null;
             })
             // Update comment cases

@@ -118,7 +118,7 @@ function Navbar() {
           <Notification />
         </div>
       )}
-            <button 
+            <button  
               className="p-2 hover:bg-accent rounded-full transition-colors group relative"
               title="Profile"
               onClick={toggleProfileMenu}

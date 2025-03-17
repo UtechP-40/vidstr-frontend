@@ -21,7 +21,7 @@ const SearchBar = () => {
       search: "",
     },
   });
-
+ 
   const onSubmit = (data) => {
     if(data.search) {
       navigate(`/search/${data.search}`);

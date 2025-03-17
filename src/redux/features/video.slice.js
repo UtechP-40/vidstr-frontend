@@ -45,13 +45,19 @@ export const fetchCurrentVideo = createAsyncThunk(
     }
   }
 );
-
+ 
 export const publishVideo = createAsyncThunk(
   'video/publishVideo',
-  async (formData) => {
+  async ({ formData, onProgress }) => {
     try {
       const response = await axiosInstance.post('/videos/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress?.(progress);
+        }
       });
       return response.data;
     } catch (error) {

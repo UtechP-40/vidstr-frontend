@@ -9,6 +9,8 @@ import HomePage from './pages/HomePage'
 import Sidebar from "./components/Sidebar";
 import Upload from "./pages/Upload"
 import WatchPage from "./pages/WatchPage"
+import SearchPage from "./pages/SearchPage"
+import ProfilePage from './pages/ProfilePage'
 import "./App.css"
 function App() {
   const dispatch = useDispatch()
@@ -29,7 +31,9 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/watch/:videoId" element={<WatchPage />} />
+          <Route path="search/:searchQuery" element={<SearchPage/>} />
           <Route path="/upload" element={user?<Upload />:<Navigate to="/"/>} />
+          <Route path="/profile/:username" element={<ProfilePage />} />
         </Routes>
         <Toaster />
       </div>

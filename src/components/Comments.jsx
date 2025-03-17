@@ -21,11 +21,13 @@ const Comments = ({ }) => {
   const [localComments, setLocalComments] = useState([]);
   const commentsContainerRef = useRef(null);
   const dispatch = useDispatch();
-  const { comments, loading, error, hasMore } = useSelector((state) => state.comments);
+  const { comments = [], loading, error, hasMore } = useSelector((state) => state.comments);
   const { user } = useSelector((state) => state.user);
 
   useEffect(() => {
-    setLocalComments(comments);
+    if (Array.isArray(comments)) {
+      setLocalComments(comments);
+    }
   }, [comments]);
 
   useEffect(() => {
@@ -35,7 +37,8 @@ const Comments = ({ }) => {
       if (videoId && mounted) {
         const videoIdString = typeof videoId === 'object' ? videoId._id || videoId.id : videoId;
         try {
-          if (comments.length === 0 || comments[0]?.videoId !== videoIdString) {
+          // Remove the condition that checks comments[0]?.videoId
+          if (!Array.isArray(comments) || comments.length === 0) {
             await dispatch(fetchVideoComments(videoIdString));
           }
         } catch (error) {
@@ -49,7 +52,7 @@ const Comments = ({ }) => {
     return () => {
       mounted = false;
     };
-  }, [videoId, dispatch, page]);
+  }, [videoId, dispatch]); // Remove 'page' and 'comments' from dependency array
 
   const handleScroll = useCallback(() => {
     if (commentsContainerRef.current) {

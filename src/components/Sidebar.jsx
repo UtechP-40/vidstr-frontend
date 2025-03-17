@@ -25,7 +25,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
         {user && (
           <li>
-            <Link to="/profile">
+            <Link to={`/profile/${user.username}`}>
               <FaUser />
               {isOpen && <span>Profile</span>}
             </Link>
